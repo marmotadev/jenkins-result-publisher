@@ -14,7 +14,7 @@
 	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.build.finalName>jenkinspub</project.build.finalName>
+		
 	</properties>
 	<build>
 		<plugins>
@@ -97,6 +97,7 @@
 							<mainClass>com.payex.utils.build.JenkinsReader</mainClass>
 						</manifest>
 					</archive>
+					<finalName>jenkinspub</finalName>
 				</configuration>
 			</plugin>
 		</plugins>
