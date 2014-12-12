@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions name="DataService" targetNamespace="http://tempuri.org/"
+	xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:wsam="http://www.w3.org/2007/05/addressing/metadata"
+	xmlns:wsx="http://schemas.xmlsoap.org/ws/2004/09/mex" xmlns:wsap="http://schemas.xmlsoap.org/ws/2004/08/addressing/policy"
+	xmlns:msc="http://schemas.microsoft.com/ws/2005/12/wsdl/contract"
+	xmlns:wsp="http://schemas.xmlsoap.org/ws/2004/09/policy" xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/"
+	xmlns:wsu="http://docs.oasis-open.org/wss/2004/01/oasis-200401-wss-wssecurity-utility-1.0.xsd"
+	xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/"
+	xmlns:tns="http://tempuri.org/" xmlns:wsa10="http://www.w3.org/2005/08/addressing"
+	xmlns:wsaw="http://www.w3.org/2006/05/addressing/wsdl" xmlns:wsa="http://schemas.xmlsoap.org/ws/2004/08/addressing">
+	<wsdl:types>
+		<xs:schema elementFormDefault="qualified" targetNamespace="http://tempuri.org/"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema">
+			<xs:import
+				namespace="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer" />
+			<xs:element name="GetProtocolVersion">
+				<xs:complexType>
+					<xs:sequence />
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="GetProtocolVersionResponse">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element minOccurs="0" name="GetProtocolVersionResult"
+							type="xs:int" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="GetDataSourceConfig">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element minOccurs="0" name="req" nillable="true"
+							type="q1:GetDataSourceConfigRequest"
+							xmlns:q1="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="GetDataSourceConfigResponse">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element minOccurs="0" name="GetDataSourceConfigResult"
+							nillable="true" type="q2:GetDataSourceConfigResponse"
+							xmlns:q2="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="PushFinishedBuilds">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element minOccurs="0" name="req" nillable="true"
+							type="q3:PushFinishedBuildsRequest"
+							xmlns:q3="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+			<xs:element name="PushFinishedBuildsResponse">
+				<xs:complexType>
+					<xs:sequence>
+						<xs:element minOccurs="0" name="PushFinishedBuildsResult"
+							nillable="true" type="q4:PushFinishedBuildsResponse"
+							xmlns:q4="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer" />
+					</xs:sequence>
+				</xs:complexType>
+			</xs:element>
+		</xs:schema>
+		<xs:schema attributeFormDefault="qualified"
+			elementFormDefault="qualified"
+			targetNamespace="http://schemas.microsoft.com/2003/10/Serialization/"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:tns="http://schemas.microsoft.com/2003/10/Serialization/">
+			<xs:element name="anyType" nillable="true" type="xs:anyType" />
+			<xs:element name="anyURI" nillable="true" type="xs:anyURI" />
+			<xs:element name="base64Binary" nillable="true" type="xs:base64Binary" />
+			<xs:element name="boolean" nillable="true" type="xs:boolean" />
+			<xs:element name="byte" nillable="true" type="xs:byte" />
+			<xs:element name="dateTime" nillable="true" type="xs:dateTime" />
+			<xs:element name="decimal" nillable="true" type="xs:decimal" />
+			<xs:element name="double" nillable="true" type="xs:double" />
+			<xs:element name="float" nillable="true" type="xs:float" />
+			<xs:element name="int" nillable="true" type="xs:int" />
+			<xs:element name="long" nillable="true" type="xs:long" />
+			<xs:element name="QName" nillable="true" type="xs:QName" />
+			<xs:element name="short" nillable="true" type="xs:short" />
+			<xs:element name="string" nillable="true" type="xs:string" />
+			<xs:element name="unsignedByte" nillable="true" type="xs:unsignedByte" />
+			<xs:element name="unsignedInt" nillable="true" type="xs:unsignedInt" />
+			<xs:element name="unsignedLong" nillable="true" type="xs:unsignedLong" />
+			<xs:element name="unsignedShort" nillable="true"
+				type="xs:unsignedShort" />
+			<xs:element name="char" nillable="true" type="tns:char" />
+			<xs:simpleType name="char">
+				<xs:restriction base="xs:int" />
+			</xs:simpleType>
+			<xs:element name="duration" nillable="true" type="tns:duration" />
+			<xs:simpleType name="duration">
+				<xs:restriction base="xs:duration">
+					<xs:pattern value="\-?P(\d*D)?(T(\d*H)?(\d*M)?(\d*(\.\d*)?S)?)?" />
+					<xs:minInclusive value="-P10675199DT2H48M5.4775808S" />
+					<xs:maxInclusive value="P10675199DT2H48M5.4775807S" />
+				</xs:restriction>
+			</xs:simpleType>
+			<xs:element name="guid" nillable="true" type="tns:guid" />
+			<xs:simpleType name="guid">
+				<xs:restriction base="xs:string">
+					<xs:pattern
+						value="[\da-fA-F]{8}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{4}-[\da-fA-F]{12}" />
+				</xs:restriction>
+			</xs:simpleType>
+			<xs:attribute name="FactoryType" type="xs:QName" />
+			<xs:attribute name="Id" type="xs:ID" />
+			<xs:attribute name="Ref" type="xs:IDREF" />
+		</xs:schema>
+		<xs:schema elementFormDefault="qualified"
+			targetNamespace="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer"
+			xmlns:xs="http://www.w3.org/2001/XMLSchema"
+			xmlns:tns="http://schemas.datacontract.org/2004/07/BuildWatch.ControlServer">
+			<xs:complexType name="GetDataSourceConfigRequest">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="Name" nillable="true"
+						type="xs:string" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="GetDataSourceConfigRequest" nillable="true"
+				type="tns:GetDataSourceConfigRequest" />
+			<xs:complexType name="GetDataSourceConfigResponse">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="ConfigEntries" nillable="true"
+						type="tns:ArrayOfConfigEntry" />
+					<xs:element minOccurs="0" name="DataSourceId" type="xs:int" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="GetDataSourceConfigResponse" nillable="true"
+				type="tns:GetDataSourceConfigResponse" />
+			<xs:complexType name="ArrayOfConfigEntry">
+				<xs:sequence>
+					<xs:element minOccurs="0" maxOccurs="unbounded" name="ConfigEntry"
+						nillable="true" type="tns:ConfigEntry" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="ArrayOfConfigEntry" nillable="true"
+				type="tns:ArrayOfConfigEntry" />
+			<xs:complexType name="ConfigEntry">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="Key" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="Value" nillable="true"
+						type="xs:string" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="ConfigEntry" nillable="true" type="tns:ConfigEntry" />
+			<xs:complexType name="PushFinishedBuildsRequest">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="BuildInfo" nillable="true"
+						type="tns:ArrayOfFinishedBuildInfo" />
+					<xs:element minOccurs="0" name="DataSourceId" type="xs:int" />
+					<xs:element minOccurs="0" name="QueuedBuilds" nillable="true"
+						type="tns:ArrayOfQueuedBuildInfo" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="PushFinishedBuildsRequest" nillable="true"
+				type="tns:PushFinishedBuildsRequest" />
+			<xs:complexType name="ArrayOfFinishedBuildInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" maxOccurs="unbounded" name="FinishedBuildInfo"
+						nillable="true" type="tns:FinishedBuildInfo" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="ArrayOfFinishedBuildInfo" nillable="true"
+				type="tns:ArrayOfFinishedBuildInfo" />
+			<xs:complexType name="FinishedBuildInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="BuildInstance" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="BuildName" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="Result" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="TimeStamp" type="xs:dateTime" />
+					<xs:element minOccurs="0" name="UserAction" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="UserName" nillable="true"
+						type="xs:string" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="FinishedBuildInfo" nillable="true"
+				type="tns:FinishedBuildInfo" />
+			<xs:complexType name="ArrayOfQueuedBuildInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" maxOccurs="unbounded" name="QueuedBuildInfo"
+						nillable="true" type="tns:QueuedBuildInfo" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="ArrayOfQueuedBuildInfo" nillable="true"
+				type="tns:ArrayOfQueuedBuildInfo" />
+			<xs:complexType name="QueuedBuildInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="BuildName" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="QueueTime" type="xs:dateTime" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="QueuedBuildInfo" nillable="true"
+				type="tns:QueuedBuildInfo" />
+			<xs:complexType name="PushFinishedBuildsResponse">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="AdditionalQueries"
+						nillable="true" type="tns:ArrayOfQueryInfo" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="PushFinishedBuildsResponse" nillable="true"
+				type="tns:PushFinishedBuildsResponse" />
+			<xs:complexType name="ArrayOfQueryInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" maxOccurs="unbounded" name="QueryInfo"
+						nillable="true" type="tns:QueryInfo" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="ArrayOfQueryInfo" nillable="true"
+				type="tns:ArrayOfQueryInfo" />
+			<xs:complexType name="QueryInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="QueryBuildRange"
+						nillable="true" type="tns:QueryBuildRangeInfo" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="QueryInfo" nillable="true" type="tns:QueryInfo" />
+			<xs:complexType name="QueryBuildRangeInfo">
+				<xs:sequence>
+					<xs:element minOccurs="0" name="BuildName" nillable="true"
+						type="xs:string" />
+					<xs:element minOccurs="0" name="RangeFrom" type="xs:dateTime" />
+					<xs:element minOccurs="0" name="RangeTo" type="xs:dateTime" />
+				</xs:sequence>
+			</xs:complexType>
+			<xs:element name="QueryBuildRangeInfo" nillable="true"
+				type="tns:QueryBuildRangeInfo" />
+		</xs:schema>
+	</wsdl:types>
+	<wsdl:message name="IDataService_GetProtocolVersion_InputMessage">
+		<wsdl:part name="parameters" element="tns:GetProtocolVersion" />
+	</wsdl:message>
+	<wsdl:message name="IDataService_GetProtocolVersion_OutputMessage">
+		<wsdl:part name="parameters" element="tns:GetProtocolVersionResponse" />
+	</wsdl:message>
+	<wsdl:message name="IDataService_GetDataSourceConfig_InputMessage">
+		<wsdl:part name="parameters" element="tns:GetDataSourceConfig" />
+	</wsdl:message>
+	<wsdl:message name="IDataService_GetDataSourceConfig_OutputMessage">
+		<wsdl:part name="parameters" element="tns:GetDataSourceConfigResponse" />
+	</wsdl:message>
+	<wsdl:message name="IDataService_PushFinishedBuilds_InputMessage">
+		<wsdl:part name="parameters" element="tns:PushFinishedBuilds" />
+	</wsdl:message>
+	<wsdl:message name="IDataService_PushFinishedBuilds_OutputMessage">
+		<wsdl:part name="parameters" element="tns:PushFinishedBuildsResponse" />
+	</wsdl:message>
+	<wsdl:portType name="IDataService">
+		<wsdl:operation name="GetProtocolVersion">
+			<wsdl:input wsaw:Action="http://tempuri.org/IDataService/GetProtocolVersion"
+				message="tns:IDataService_GetProtocolVersion_InputMessage" />
+			<wsdl:output
+				wsaw:Action="http://tempuri.org/IDataService/GetProtocolVersionResponse"
+				message="tns:IDataService_GetProtocolVersion_OutputMessage" />
+		</wsdl:operation>
+		<wsdl:operation name="GetDataSourceConfig">
+			<wsdl:input wsaw:Action="http://tempuri.org/IDataService/GetDataSourceConfig"
+				message="tns:IDataService_GetDataSourceConfig_InputMessage" />
+			<wsdl:output
+				wsaw:Action="http://tempuri.org/IDataService/GetDataSourceConfigResponse"
+				message="tns:IDataService_GetDataSourceConfig_OutputMessage" />
+		</wsdl:operation>
+		<wsdl:operation name="PushFinishedBuilds">
+			<wsdl:input wsaw:Action="http://tempuri.org/IDataService/PushFinishedBuilds"
+				message="tns:IDataService_PushFinishedBuilds_InputMessage" />
+			<wsdl:output
+				wsaw:Action="http://tempuri.org/IDataService/PushFinishedBuildsResponse"
+				message="tns:IDataService_PushFinishedBuilds_OutputMessage" />
+		</wsdl:operation>
+	</wsdl:portType>
+	<wsdl:binding name="BasicHttpBinding_IDataService" type="tns:IDataService">
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+		<wsdl:operation name="GetProtocolVersion">
+			<soap:operation soapAction="http://tempuri.org/IDataService/GetProtocolVersion"
+				style="document" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="GetDataSourceConfig">
+			<soap:operation soapAction="http://tempuri.org/IDataService/GetDataSourceConfig"
+				style="document" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+		<wsdl:operation name="PushFinishedBuilds">
+			<soap:operation soapAction="http://tempuri.org/IDataService/PushFinishedBuilds"
+				style="document" />
+			<wsdl:input>
+				<soap:body use="literal" />
+			</wsdl:input>
+			<wsdl:output>
+				<soap:body use="literal" />
+			</wsdl:output>
+		</wsdl:operation>
+	</wsdl:binding>
+	<wsdl:service name="DataService">
+		<wsdl:port name="BasicHttpBinding_IDataService" binding="tns:BasicHttpBinding_IDataService">
+			<soap:address location="http://192.168.3.83/BuildWatchVAS/DataService.svc" />
+		</wsdl:port>
+	</wsdl:service>
+</wsdl:definitions>
