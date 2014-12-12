@@ -1,7 +1,9 @@
 package com.payex.utils.build;
 
+import java.net.URL;
 import java.util.Map;
 
+import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
 
 import org.datacontract.schemas._2004._07.buildwatch.PushFinishedBuildsRequest;
@@ -12,6 +14,7 @@ import com.sun.xml.ws.client.BindingProviderProperties;
 
 public class BuildResultPusher {
 	private String endpointUrl;
+	private IDataService publisherService;
 
 	
 	public BuildResultPusher(String endpointUrl) {
@@ -29,20 +32,35 @@ public class BuildResultPusher {
 	}
 
 	public void pushResults(PushFinishedBuildsRequest req) {
-		IDataService ds = new DataService().getPort(IDataService.class);
-		BindingProvider bp = (BindingProvider) ds;
-		setBindingParameters(bp, 0, 0, getServiceEndpointUrl());
+		
+		
 
 		PushFinishedBuildsRequest r = req;
 		try {
-			ds.pushFinishedBuilds(r);
+			publisherService.pushFinishedBuilds(r);
 		} catch (javax.xml.ws.soap.SOAPFaultException ex) {
 			throw new RuntimeException(ex);
 		}
 	}
 
+	private IDataService initializeWsClient() {
+		URL wsdlLocation = BuildResultPusher.class.getClassLoader()
+         .getResource("META-INF/wsdl/DataService.wsdl");
+		 QName serviceDef = new QName("http://tempuri.org/", "DataService");
+		 DataService ma = new DataService(wsdlLocation, serviceDef);
+		 
+		IDataService ds = ma.getPort(IDataService.class);
+		BindingProvider bp = (BindingProvider) ds;
+		setBindingParameters(bp, 0, 0, getServiceEndpointUrl());
+		return ds;
+	}
+
 	private String getServiceEndpointUrl() {
 		return endpointUrl;
+	}
+
+	public void init() {
+		publisherService = initializeWsClient();
 	}
 
 }

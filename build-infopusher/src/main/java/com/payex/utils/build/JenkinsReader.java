@@ -56,13 +56,18 @@ public class JenkinsReader {
 		CmdOptions opts = new CmdOptions();
 		opts.jenkinsUrl = "http://localhost:8080/";
 		opts.publisherUrl = "http://192.168.3.83/BuildWatchVAS/DataService.svc";
-		opts.jenkinsUser = "admin";
-		opts.jenkinsPass = "pass";
+		opts.jenkinsUser = "";
+		opts.jenkinsPass = "";
 
 		CmdLineParser parser = new CmdLineParser(opts);
 		try {
 			parser.parseArgument(args);
 
+			log.info("Using:");
+			log.info("jenkins URL:" + opts.jenkinsUrl);
+			log.info("jenkins user:" + opts.jenkinsUser);
+			log.info("jenkins pass:" + opts.jenkinsPass);
+			log.info("publisher endpoint URL:" + opts.publisherUrl);
 			String jenkinsUrl = opts.jenkinsUrl;
 			final JenkinsReader jr = new JenkinsReader(jenkinsUrl,
 					opts.jenkinsUser, opts.jenkinsPass, opts.publisherUrl);
@@ -266,6 +271,7 @@ public class JenkinsReader {
 		try {
 			jenkins = new JenkinsServer(new URI(jenkinsUrl), user, pass);
 			publisher = new BuildResultPusher(publishServiceUrl);
+			publisher.init();
 			log.info("Initialized jenkins sever");
 		} catch (URISyntaxException e) {
 			throw new RuntimeException(e);

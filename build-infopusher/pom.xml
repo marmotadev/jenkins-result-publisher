@@ -5,8 +5,16 @@
 	<artifactId>build-infopusher</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Jenkins BUILD info pusher</name>
+	<developers>
+		<developer>
+			<email>jaunius@gmail.com</email>
+			<name>Jaunius Belickas</name>
+			<url>https://github.com/marmotadev/jenkins-result-publisher</url>
+		</developer>
+	</developers>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.build.finalName>jenkinspub</project.build.finalName>
 	</properties>
 	<build>
 		<plugins>
@@ -85,6 +93,7 @@
 					<archive>
 						<manifest>
 							<addClasspath>true</addClasspath>
+							<classpathPrefix>lib/</classpathPrefix>
 							<mainClass>com.payex.utils.build.JenkinsReader</mainClass>
 						</manifest>
 					</archive>
