@@ -185,7 +185,6 @@ public class JenkinsReader {
 	
 	private Build findLastFinishedJob(JobWithDetails jd) throws IOException {
 		List<Build> blist = jd.getBuilds();
-		System.out.println("---");
 		for (Build bip: blist) { // they are ordered in descendant order
 			if (!bip.details().isBuilding()) {
 				// this is finished build, but I'm not interested in aborted builds, since they don't tell anything usefull
