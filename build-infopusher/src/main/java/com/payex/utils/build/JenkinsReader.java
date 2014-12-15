@@ -6,6 +6,7 @@ import java.net.URISyntaxException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
@@ -97,8 +98,13 @@ public class JenkinsReader {
 			tm.schedule(new TimerTask() {
 				@Override
 				public void run() {
-					log.trace(new Date() + ": Refreshing build statuses...");
-					jr.getAndPublish();
+					try {
+						log.trace(new Date() + ": Refreshing build statuses...");
+						jr.getAndPublish();
+					}
+					catch (Exception e) {
+						e.printStackTrace();
+					}
 				}
 			}, new Date(), TimeUnit.SECONDS.toMillis(PUSH_INTERVAL_SECONDS));
 		} catch (CmdLineException e) {
@@ -124,38 +130,24 @@ public class JenkinsReader {
 	private PushFinishedBuildsRequest buildResultsRequestObject(
 			Map<String, Job> jobs) {
 		try {
-
 			boolean filterOutNewBuilds = true;
 
 			ObjectFactory of = new ObjectFactory();
-			PushFinishedBuildsRequest r = of.createPushFinishedBuildsRequest();
-			r.setBuildInfo(of.createArrayOfFinishedBuildInfo());
-			r.setDataSourceId(1);
-			r.setQueuedBuilds(of.createArrayOfQueuedBuildInfo());
+			PushFinishedBuildsRequest r = initRequestObject(of);
 
 			Map<String, Job> fjobs = filterJobs(jobs);
 			for (Entry<String, Job> es : fjobs.entrySet()) {
 				Job job = es.getValue();
 				JobWithDetails jd = job.details();
 
-				String buildName = jd.getDisplayName();
-
 				if (!jd.getBuilds().isEmpty()) {
+					addRunningJobsToQueue(of, r, jd);
+					addFinishedJobIfAnyExist(of, r, jd); 
 
-					Build lastBuild = jd.getLastBuild();
-					buildName = formatBuildName(jd);
-					BuildResult jenkinsLastBuildStatus = lastBuild.details()
-							.getResult();
-
-					if (isFinishedStatus(jenkinsLastBuildStatus)) {
-						addFinishedBuild(of, r, buildName,
-								jenkinsLastBuildStatus, lastBuild.details());
-					} else { // in progress
-						addQueuedBuild(of, r, buildName, lastBuild);
-					}
 				} else {
 					if (filterOutNewBuilds)
 						continue;
+					addNewJobToList(of, r, jd);
 				}
 			}
 
@@ -163,6 +155,71 @@ public class JenkinsReader {
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private PushFinishedBuildsRequest initRequestObject(ObjectFactory of) {
+		PushFinishedBuildsRequest r = of.createPushFinishedBuildsRequest();
+		r.setBuildInfo(of.createArrayOfFinishedBuildInfo());
+		r.setDataSourceId(1);
+		r.setQueuedBuilds(of.createArrayOfQueuedBuildInfo());
+		return r;
+	}
+
+	private String addNewJobToList(ObjectFactory of,
+			PushFinishedBuildsRequest r, JobWithDetails jd) throws IOException {
+		String buildName = jd.getDisplayName();
+		addQueuedBuild(of, r, buildName, null);
+		return buildName;
+	}
+
+	private void addRunningJobsToQueue(ObjectFactory of,
+			PushFinishedBuildsRequest r, JobWithDetails jd) throws IOException {
+		List<Build> blist = jd.getBuilds();
+		for (Build bip: blist) {
+			if (bip.details().isBuilding()) {
+				String buildName = formatBuildName(jd, bip);
+				addQueuedBuild(of, r, buildName, bip);
+			}
+		}
+	}
+	
+	private Build findLastFinishedJob(JobWithDetails jd) throws IOException {
+		List<Build> blist = jd.getBuilds();
+		System.out.println("---");
+		for (Build bip: blist) { // they are ordered in descendant order
+			if (!bip.details().isBuilding()) {
+				// this is finished build, but I'm not interested in aborted builds, since they don't tell anything usefull
+				if (bip.details().getResult().equals(BuildResult.ABORTED) || bip.details().getResult().equals(BuildResult.UNKNOWN))
+					continue;
+				return bip; // then next one is the one we need
+			}
+		}
+		return null;
+	}
+
+	private void addFinishedJobIfAnyExist(ObjectFactory of,
+			PushFinishedBuildsRequest r, JobWithDetails jd) throws IOException {
+		Build lastBuild = null;
+//		lastBuild = jd.getLastBuild();
+		BuildResult jenkinsLastBuildStatus = null;
+//		BuildResult jenkinsLastBuildStatus = lastBuild.details()
+//				.getResult();
+		String buildName = null;
+		
+//		if (isFinishedStatus(jenkinsLastBuildStatus)) {
+//			buildName = formatBuildName(jd, lastBuild);
+//		}
+//		else { 
+			lastBuild = findLastFinishedJob(jd);
+			if (lastBuild == null)
+				return;
+			
+			jenkinsLastBuildStatus = lastBuild.details().getResult();
+			buildName = formatBuildName(jd, lastBuild);
+
+//		}
+		addFinishedBuild(of, r, buildName,
+				jenkinsLastBuildStatus, lastBuild.details());
 	}
 
 	private Map<String, Job> filterJobs(Map<String, Job> jobs) {
@@ -178,20 +235,20 @@ public class JenkinsReader {
 					log.error("WIll substitute job name");
 					jobName = e.getValue().getName();
 				}
-				log.debug("-> Checking if '" + jobName + "' should be filtered out");
+				log.trace("-> Checking if '" + jobName + "' should be filtered out");
 				for (Filter f : filters.getFilters()) {
 					if (f == null) {
 						log.info("Filter is null, skipping");
 						continue;
 					}
-					log.debug("-->Will check filter " + f.getName());
+					log.trace("-->Will check filter " + f.getName());
 					if (f.getTests() != null) {
 						for (Test t : f.getTests()) {
 							try {
-								log.debug("--->Rule: '" + t.getRegex()
+								log.trace("--->Rule: '" + t.getRegex()
 										+ "', action: " + t.getAction());
 								if (t.getAction().equals(Action.hide)) {
-									log.debug("Action is hide, checking for match");
+									log.trace("Action is hide, checking for match");
 									if (t.getAction().equals(Action.hide)
 											&& jobName.matches(t.getRegex())) {
 										log.debug("Hiding job: " + jobName
@@ -199,7 +256,7 @@ public class JenkinsReader {
 										return false;
 									}
 									else
-										log.debug("Did not match a '" + jobName + "'");
+										log.trace("Did not match a '" + jobName + "'");
 								}
 							} catch (PatternSyntaxException ex) {
 								log.error("Invalid regexp in config: "
@@ -218,10 +275,9 @@ public class JenkinsReader {
 		return filtered;
 	}
 
-	private String formatBuildName(JobWithDetails jd) throws IOException {
-		Build lastBuild = jd.getLastBuild();
+	private String formatBuildName(JobWithDetails jd, Build specificJob) throws IOException {
 		String buildName = String.format("%s#%d (%s)", jd.getDisplayName(),
-				lastBuild.details().getNumber(), lastBuild.details()
+				specificJob.details().getNumber(), specificJob.details()
 						.getResult());
 		return buildName;
 	}
@@ -230,7 +286,9 @@ public class JenkinsReader {
 			String buildName, Build lastBuild) throws IOException {
 		QueuedBuildInfo e = of.createQueuedBuildInfo();
 		e.setBuildName(buildName);
-		long ts = lastBuild.details().getTimestamp();
+		long ts = 0;
+		if (lastBuild != null)
+			ts = lastBuild.details().getTimestamp();
 		XMLGregorianCalendar cal = buildCal(ts);
 		e.setQueueTime(cal);
 		r.getQueuedBuilds().getQueuedBuildInfo().add(e);

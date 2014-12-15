@@ -17,15 +17,15 @@
 				<Test regex=".*" action="notify" />
 			</Tests>
 		</Filter>
-		<Filter name="Test">
-			<Tests>
-				<Test regex="^job2" action="hide" />
-				<Test regex="^JOB5.*" action="hide" />
-				<Test regex="^LongRunning.*" action="hide" />
-				<Test regex="^TestSSH" action="hide" />
-				<Test regex="^TestSelectProjects" action="hide" />
-				<Test regex="^Naujas.*" action="hide" />
-			</Tests>
-		</Filter>
+<!-- 		<Filter name="Test"> -->
+<!-- 			<Tests> -->
+<!-- 				<Test regex="^job2" action="hide" /> -->
+<!-- 				<Test regex="^JOB5.*" action="hide" /> -->
+<!-- 				<Test regex="^LongRunning.*" action="hide" /> -->
+<!-- 				<Test regex="^TestSSH" action="hide" /> -->
+<!-- 				<Test regex="^TestSelectProjects" action="hide" /> -->
+<!-- 				<Test regex="^Naujas.*" action="hide" /> -->
+<!-- 			</Tests> -->
+<!-- 		</Filter> -->
 	</Filters>
 </FilterSet>
