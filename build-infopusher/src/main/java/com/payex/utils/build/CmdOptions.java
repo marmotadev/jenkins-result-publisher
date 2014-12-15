@@ -13,4 +13,6 @@ public class CmdOptions {
 	String publisherUrl;
 	@Option(name="-i",usage="Refresh interval")
 	Long refreshInterval;
+	@Option(name="-f",usage="Filter path location")
+	String filterFilePath;
 }

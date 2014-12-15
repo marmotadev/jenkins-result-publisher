@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FilterSet xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<Filters>
+		<!-- <Filter name="MPS"> <Tests> <Test regex="^Dev-RelTo" action="notify" 
+			/> <Test regex="^Dev-PubTo" action="notify" /> <Test regex="ResponsiveDesign" 
+			action="hide" /> <Test regex="^Dev-" action="show" /> <Test regex="^Next-" 
+			action="show" /> <Test regex=".*" action="notify" /> </Tests> </Filter> -->
+		<Filter name="MPS">
+			<Tests>
+				<Test regex="^MpsDeployDev" action="notify" />
+				<Test regex="^MpsDeployStage" action="notify" />
+				<Test regex="^TestSSH" action="hide" />
+				<Test regex="^TestSelectProjects" action="hide" />
+				<!-- <Test regex="^Dev-" action="show" /> <Test regex="^Next-" action="show" 
+					/> -->
+				<Test regex=".*" action="notify" />
+			</Tests>
+		</Filter>
+		<Filter name="Test">
+			<Tests>
+				<Test regex="^job2" action="hide" />
+				<Test regex="^JOB5.*" action="hide" />
+				<Test regex="^LongRunning.*" action="hide" />
+				<Test regex="^TestSSH" action="hide" />
+				<Test regex="^TestSelectProjects" action="hide" />
+				<Test regex="^Naujas.*" action="hide" />
+			</Tests>
+		</Filter>
+	</Filters>
+</FilterSet>

@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.regex.PatternSyntaxException;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -25,12 +26,19 @@ import org.datacontract.schemas._2004._07.buildwatch.QueuedBuildInfo;
 import org.kohsuke.args4j.CmdLineException;
 import org.kohsuke.args4j.CmdLineParser;
 
+import com.google.common.base.Predicate;
+import com.google.common.collect.Maps;
 import com.offbytwo.jenkins.JenkinsServer;
 import com.offbytwo.jenkins.model.Build;
 import com.offbytwo.jenkins.model.BuildResult;
 import com.offbytwo.jenkins.model.BuildWithDetails;
 import com.offbytwo.jenkins.model.Job;
 import com.offbytwo.jenkins.model.JobWithDetails;
+import com.payex.utils.build.filters.FilterReader;
+import com.payex.utils.build.filters.jaxb.Action;
+import com.payex.utils.build.filters.jaxb.Filter;
+import com.payex.utils.build.filters.jaxb.FilterSet;
+import com.payex.utils.build.filters.jaxb.Test;
 
 public class JenkinsReader {
 	private static final int PUSH_INTERVAL_SECONDS = 5;
@@ -43,6 +51,7 @@ public class JenkinsReader {
 	private JenkinsServer jenkins;
 	private BuildResultPusher publisher;
 	private String publishServiceUrl;
+	private String filterFile;
 
 	public JenkinsReader(String jenkinsUrl, String jenkinsUser,
 			String jenkinsPass, String pushServiceUrl) {
@@ -52,12 +61,22 @@ public class JenkinsReader {
 		publishServiceUrl = pushServiceUrl;
 	}
 
+	public JenkinsReader(String jenkinsUrl, String jenkinsUser,
+			String jenkinsPass, String pushServiceUrl, String filterFile) {
+		this.jenkinsUrl = jenkinsUrl;
+		this.user = jenkinsUser;
+		this.pass = jenkinsPass;
+		this.publishServiceUrl = pushServiceUrl;
+		this.filterFile = filterFile;
+	}
+
 	public static void main(String[] args) {
 		CmdOptions opts = new CmdOptions();
 		opts.jenkinsUrl = "http://localhost:8080/";
 		opts.publisherUrl = "http://192.168.3.83/BuildWatchVAS/DataService.svc";
 		opts.jenkinsUser = "";
 		opts.jenkinsPass = "";
+		opts.filterFilePath = "filters.xml";
 
 		CmdLineParser parser = new CmdLineParser(opts);
 		try {
@@ -70,7 +89,8 @@ public class JenkinsReader {
 			log.info("publisher endpoint URL:" + opts.publisherUrl);
 			String jenkinsUrl = opts.jenkinsUrl;
 			final JenkinsReader jr = new JenkinsReader(jenkinsUrl,
-					opts.jenkinsUser, opts.jenkinsPass, opts.publisherUrl);
+					opts.jenkinsUser, opts.jenkinsPass, opts.publisherUrl,
+					opts.filterFilePath);
 			jr.init();
 			Timer tm = new Timer();
 			log.info("Pushing info every {} seconds", PUSH_INTERVAL_SECONDS);
@@ -104,7 +124,7 @@ public class JenkinsReader {
 	private PushFinishedBuildsRequest buildResultsRequestObject(
 			Map<String, Job> jobs) {
 		try {
- 
+
 			boolean filterOutNewBuilds = true;
 
 			ObjectFactory of = new ObjectFactory();
@@ -113,7 +133,8 @@ public class JenkinsReader {
 			r.setDataSourceId(1);
 			r.setQueuedBuilds(of.createArrayOfQueuedBuildInfo());
 
-			for (Entry<String, Job> es : jobs.entrySet()) {
+			Map<String, Job> fjobs = filterJobs(jobs);
+			for (Entry<String, Job> es : fjobs.entrySet()) {
 				Job job = es.getValue();
 				JobWithDetails jd = job.details();
 
@@ -144,11 +165,64 @@ public class JenkinsReader {
 		}
 	}
 
+	private Map<String, Job> filterJobs(Map<String, Job> jobs) {
+		FilterReader fr = new FilterReader();
+		final FilterSet filters = fr.readFilters(this.filterFile);
+		Predicate<Map.Entry<String, Job>> jobFilter = new Predicate<Map.Entry<String, Job>>() {
+			public boolean apply(Entry<String, Job> e) {
+				String jobName;
+				try {
+					jobName = e.getValue().details().getDisplayName();
+				} catch (IOException e1) {
+					log.error(e1.getMessage(), e1);
+					log.error("WIll substitute job name");
+					jobName = e.getValue().getName();
+				}
+				log.debug("-> Checking if '" + jobName + "' should be filtered out");
+				for (Filter f : filters.getFilters()) {
+					if (f == null) {
+						log.info("Filter is null, skipping");
+						continue;
+					}
+					log.debug("-->Will check filter " + f.getName());
+					if (f.getTests() != null) {
+						for (Test t : f.getTests()) {
+							try {
+								log.debug("--->Rule: '" + t.getRegex()
+										+ "', action: " + t.getAction());
+								if (t.getAction().equals(Action.hide)) {
+									log.debug("Action is hide, checking for match");
+									if (t.getAction().equals(Action.hide)
+											&& jobName.matches(t.getRegex())) {
+										log.debug("Hiding job: " + jobName
+												+ "(" + t + " applies)");
+										return false;
+									}
+									else
+										log.debug("Did not match a '" + jobName + "'");
+								}
+							} catch (PatternSyntaxException ex) {
+								log.error("Invalid regexp in config: "
+										+ t.getRegex());
+							}
+						}
+					}
+				}
+				return true;
+			}
+
+		};
+
+		Map<String, Job> filtered = Maps.filterEntries(jobs, jobFilter);
+
+		return filtered;
+	}
+
 	private String formatBuildName(JobWithDetails jd) throws IOException {
 		Build lastBuild = jd.getLastBuild();
-		String buildName = String.format("%s#%d (%s)", jd
-				.getDisplayName(), lastBuild.details().getNumber(), lastBuild
-				.details().getResult()); 
+		String buildName = String.format("%s#%d (%s)", jd.getDisplayName(),
+				lastBuild.details().getNumber(), lastBuild.details()
+						.getResult());
 		return buildName;
 	}
 
