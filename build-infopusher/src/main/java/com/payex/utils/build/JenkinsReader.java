@@ -200,26 +200,19 @@ public class JenkinsReader {
 	private void addFinishedJobIfAnyExist(ObjectFactory of,
 			PushFinishedBuildsRequest r, JobWithDetails jd) throws IOException {
 		Build lastBuild = null;
-//		lastBuild = jd.getLastBuild();
 		BuildResult jenkinsLastBuildStatus = null;
-//		BuildResult jenkinsLastBuildStatus = lastBuild.details()
-//				.getResult();
-		String buildName = null;
-		
-//		if (isFinishedStatus(jenkinsLastBuildStatus)) {
-//			buildName = formatBuildName(jd, lastBuild);
-//		}
-//		else { 
-			lastBuild = findLastFinishedJob(jd);
-			if (lastBuild == null)
-				return;
-			
-			jenkinsLastBuildStatus = lastBuild.details().getResult();
-			buildName = formatBuildName(jd, lastBuild);
 
-//		}
-		addFinishedBuild(of, r, buildName,
-				jenkinsLastBuildStatus, lastBuild.details());
+		String buildName = null;
+
+		lastBuild = findLastFinishedJob(jd);
+		if (lastBuild == null)
+			return;
+
+		jenkinsLastBuildStatus = lastBuild.details().getResult();
+		buildName = formatBuildName(jd, lastBuild);
+
+		addFinishedBuild(of, r, buildName, jenkinsLastBuildStatus,
+				lastBuild.details());
 	}
 
 	private Map<String, Job> filterJobs(Map<String, Job> jobs) {
