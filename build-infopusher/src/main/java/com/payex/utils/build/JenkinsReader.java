@@ -146,9 +146,9 @@ public class JenkinsReader {
 
 	private String formatBuildName(JobWithDetails jd) throws IOException {
 		Build lastBuild = jd.getLastBuild();
-		String buildName = String.format("%s#%d (%s, args)", jd
+		String buildName = String.format("%s#%d (%s)", jd
 				.getDisplayName(), lastBuild.details().getNumber(), lastBuild
-				.details().getResult());
+				.details().getResult()); 
 		return buildName;
 	}
 
