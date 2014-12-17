@@ -202,16 +202,18 @@ public class JenkinsReader {
 		BuildResult jenkinsLastBuildStatus = null;
 
 		String buildName = null;
+		String buildInstanceName = null;
 
 		lastBuild = findLastFinishedJob(jd);
 		if (lastBuild == null)
 			return;
 
 		jenkinsLastBuildStatus = lastBuild.details().getResult();
+		buildInstanceName = formatBuildInstanceName(jd, lastBuild);
 		buildName = formatBuildName(jd, lastBuild);
 
-		addFinishedBuild(of, r, buildName, jenkinsLastBuildStatus,
-				lastBuild.details());
+		addFinishedBuild(of, r, buildInstanceName, jenkinsLastBuildStatus,
+				lastBuild.details(), buildName);
 	}
 
 	private Map<String, Job> filterJobs(Map<String, Job> jobs) {
@@ -268,6 +270,9 @@ public class JenkinsReader {
 	}
 
 	private String formatBuildName(JobWithDetails jd, Build specificJob) throws IOException {
+		return jd.getDisplayName();
+	}
+	private String formatBuildInstanceName(JobWithDetails jd, Build specificJob) throws IOException {
 		String buildName = String.format("%s#%d (%s)", jd.getDisplayName(),
 				specificJob.details().getNumber(), specificJob.details()
 						.getResult());
@@ -287,8 +292,8 @@ public class JenkinsReader {
 	}
 
 	private void addFinishedBuild(ObjectFactory of,
-			PushFinishedBuildsRequest r, String buildName,
-			BuildResult jenkinsLastBuildStatus, BuildWithDetails lastBuild) {
+			PushFinishedBuildsRequest r, String buildInstance,
+			BuildResult jenkinsLastBuildStatus, BuildWithDetails lastBuild, String buildName) {
 		FinishedBuildInfo e = of.createFinishedBuildInfo();
 
 		String result = convertFinishedJenkinsStatusToWatcherStatus(jenkinsLastBuildStatus);
@@ -300,6 +305,7 @@ public class JenkinsReader {
 		}
 		//
 		e.setBuildName(buildName);
+		e.setBuildInstance(buildInstance);
 		e.setResult(result);
 		// e.setUserAction("Green/White");
 		e.setUserName("[unknown]");
