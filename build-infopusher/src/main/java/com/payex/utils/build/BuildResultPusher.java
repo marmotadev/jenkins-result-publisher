@@ -32,9 +32,6 @@ public class BuildResultPusher {
 	}
 
 	public void pushResults(PushFinishedBuildsRequest req) {
-		
-		
-
 		PushFinishedBuildsRequest r = req;
 		try {
 			publisherService.pushFinishedBuilds(r);

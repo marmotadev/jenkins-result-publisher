@@ -53,6 +53,7 @@ public class JenkinsReader {
 	private BuildResultPusher publisher;
 	private String publishServiceUrl;
 	private String filterFile;
+	private Boolean reuseClient;
 
 	public JenkinsReader(String jenkinsUrl, String jenkinsUser,
 			String jenkinsPass, String pushServiceUrl) {
@@ -63,12 +64,14 @@ public class JenkinsReader {
 	}
 
 	public JenkinsReader(String jenkinsUrl, String jenkinsUser,
-			String jenkinsPass, String pushServiceUrl, String filterFile) {
+			String jenkinsPass, String pushServiceUrl, String filterFile,
+			Boolean reuseJenkinsClient) {
 		this.jenkinsUrl = jenkinsUrl;
 		this.user = jenkinsUser;
 		this.pass = jenkinsPass;
 		this.publishServiceUrl = pushServiceUrl;
 		this.filterFile = filterFile;
+		this.reuseClient = reuseJenkinsClient;
 	}
 
 	public static void main(String[] args) {
@@ -78,6 +81,8 @@ public class JenkinsReader {
 		opts.jenkinsUser = "";
 		opts.jenkinsPass = "";
 		opts.filterFilePath = "filters.xml";
+		opts.refreshInterval = (long) PUSH_INTERVAL_SECONDS;
+		opts.reuseJenkinsClient = false;
 
 		CmdLineParser parser = new CmdLineParser(opts);
 		try {
@@ -91,22 +96,21 @@ public class JenkinsReader {
 			String jenkinsUrl = opts.jenkinsUrl;
 			final JenkinsReader jr = new JenkinsReader(jenkinsUrl,
 					opts.jenkinsUser, opts.jenkinsPass, opts.publisherUrl,
-					opts.filterFilePath);
+					opts.filterFilePath, opts.reuseJenkinsClient);
 			jr.init();
 			Timer tm = new Timer();
-			log.info("Pushing info every {} seconds", PUSH_INTERVAL_SECONDS);
+			log.info("Pushing info every {} seconds", opts.refreshInterval);
 			tm.schedule(new TimerTask() {
 				@Override
 				public void run() {
 					try {
 						log.trace(new Date() + ": Refreshing build statuses...");
 						jr.getAndPublish();
-					}
-					catch (Exception e) {
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				}
-			}, new Date(), TimeUnit.SECONDS.toMillis(PUSH_INTERVAL_SECONDS));
+			}, new Date(), TimeUnit.SECONDS.toMillis(opts.refreshInterval));
 		} catch (CmdLineException e) {
 			System.err.println(e.getMessage());
 			parser.printUsage(System.err);
@@ -142,7 +146,7 @@ public class JenkinsReader {
 
 				if (!jd.getBuilds().isEmpty()) {
 					addRunningJobsToQueue(of, r, jd);
-					addFinishedJobIfAnyExist(of, r, jd); 
+					addFinishedJobIfAnyExist(of, r, jd);
 
 				} else {
 					if (filterOutNewBuilds)
@@ -175,20 +179,23 @@ public class JenkinsReader {
 	private void addRunningJobsToQueue(ObjectFactory of,
 			PushFinishedBuildsRequest r, JobWithDetails jd) throws IOException {
 		List<Build> blist = jd.getBuilds();
-		for (Build bip: blist) {
+		for (Build bip : blist) {
 			if (bip.details().isBuilding()) {
 				String buildName = formatBuildName(jd, bip);
 				addQueuedBuild(of, r, buildName, bip);
 			}
 		}
 	}
-	
+
 	private Build findLastFinishedJob(JobWithDetails jd) throws IOException {
 		List<Build> blist = jd.getBuilds();
-		for (Build bip: blist) { // they are ordered in descendant order
+		for (Build bip : blist) { // they are ordered in descendant order
 			if (!bip.details().isBuilding()) {
-				// this is finished build, but I'm not interested in aborted builds, since they don't tell anything usefull
-				if (bip.details().getResult().equals(BuildResult.ABORTED) || bip.details().getResult().equals(BuildResult.UNKNOWN))
+				// this is finished build, but I'm not interested in aborted
+				// builds, since they don't tell anything usefull
+				if (bip.details().getResult().equals(BuildResult.ABORTED)
+						|| bip.details().getResult()
+								.equals(BuildResult.UNKNOWN))
 					continue;
 				return bip; // then next one is the one we need
 			}
@@ -229,7 +236,8 @@ public class JenkinsReader {
 					log.error("WIll substitute job name");
 					jobName = e.getValue().getName();
 				}
-				log.trace("-> Checking if '" + jobName + "' should be filtered out");
+				log.trace("-> Checking if '" + jobName
+						+ "' should be filtered out");
 				for (Filter f : filters.getFilters()) {
 					if (f == null) {
 						log.info("Filter is null, skipping");
@@ -248,9 +256,9 @@ public class JenkinsReader {
 										log.debug("Hiding job: " + jobName
 												+ "(" + t + " applies)");
 										return false;
-									}
-									else
-										log.trace("Did not match a '" + jobName + "'");
+									} else
+										log.trace("Did not match a '" + jobName
+												+ "'");
 								}
 							} catch (PatternSyntaxException ex) {
 								log.error("Invalid regexp in config: "
@@ -269,10 +277,13 @@ public class JenkinsReader {
 		return filtered;
 	}
 
-	private String formatBuildName(JobWithDetails jd, Build specificJob) throws IOException {
+	private String formatBuildName(JobWithDetails jd, Build specificJob)
+			throws IOException {
 		return jd.getDisplayName();
 	}
-	private String formatBuildInstanceName(JobWithDetails jd, Build specificJob) throws IOException {
+
+	private String formatBuildInstanceName(JobWithDetails jd, Build specificJob)
+			throws IOException {
 		String buildName = String.format("%s#%d (%s)", jd.getDisplayName(),
 				specificJob.details().getNumber(), specificJob.details()
 						.getResult());
@@ -293,7 +304,8 @@ public class JenkinsReader {
 
 	private void addFinishedBuild(ObjectFactory of,
 			PushFinishedBuildsRequest r, String buildInstance,
-			BuildResult jenkinsLastBuildStatus, BuildWithDetails lastBuild, String buildName) {
+			BuildResult jenkinsLastBuildStatus, BuildWithDetails lastBuild,
+			String buildName) {
 		FinishedBuildInfo e = of.createFinishedBuildInfo();
 
 		String result = convertFinishedJenkinsStatusToWatcherStatus(jenkinsLastBuildStatus);
@@ -384,6 +396,9 @@ public class JenkinsReader {
 		try {
 			log.trace("Retrieving info from jenkins server");
 
+			if (!reuseClient) {
+				initJenkinsServer();
+			}
 			Map<String, Job> jobs = jenkins.getJobs();
 
 			PushFinishedBuildsRequest req = buildResultsRequestObject(jobs);
@@ -398,11 +413,16 @@ public class JenkinsReader {
 	}
 
 	public void init() {
+		initJenkinsServer();
+		publisher = new BuildResultPusher(publishServiceUrl);
+		publisher.init();
+		log.info("Initialized jenkins sever");
+
+	}
+
+	private void initJenkinsServer() {
 		try {
 			jenkins = new JenkinsServer(new URI(jenkinsUrl), user, pass);
-			publisher = new BuildResultPusher(publishServiceUrl);
-			publisher.init();
-			log.info("Initialized jenkins sever");
 		} catch (URISyntaxException e) {
 			throw new RuntimeException(e);
 		}

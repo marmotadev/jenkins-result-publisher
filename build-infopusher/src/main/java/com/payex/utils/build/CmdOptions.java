@@ -15,4 +15,9 @@ public class CmdOptions {
 	Long refreshInterval;
 	@Option(name="-f",usage="Filter path location")
 	String filterFilePath;
+	/**
+	 * This is to work-around a bug in jenkins client, when re-using causes to connection overload
+	 */
+	@Option(name="-r",usage="Re-use jenkins client")
+	Boolean reuseJenkinsClient;
 }
